@@ -4,7 +4,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   font-family: "Courier New", monospace;
 }
 
@@ -64,4 +64,119 @@ body {
   color: #33ff33;
   font-family: inherit;
   font-size: 14px;
+}
+
+.terminal-input input::placeholder {
+  color: #33ff3360;
+}
+
+/* ========== Nome + Erro ========== */
+.terminal.name-form {
+  justify-content: flex-start;
+}
+
+.name-form-inner,
+.error-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  flex: 1;
+  justify-content: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.name-form-inner label,
+.error-view p {
+  color: #33ff33;
+  font-size: 14px;
+}
+
+.name-form-inner input,
+.name-form-inner button,
+.error-view button {
+  background: #111;
+  border: 1px solid #33ff33;
+  color: #33ff33;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.name-form-inner input:focus,
+.name-form-inner input::placeholder {
+  color: #33ff33;
+}
+
+.name-form-inner input::placeholder {
+  opacity: 0.6;
+}
+
+.name-form-inner button,
+.error-view button {
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.name-form-inner button:hover,
+.name-form-inner button:focus-visible,
+.error-view button:hover,
+.error-view button:focus-visible {
+  background: #33ff33;
+  color: #000;
+}
+
+.error-view p {
+  margin: 0;
+}
+
+/* ========== Chat + Sidebar ========== */
+.terminal-frame.chat-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.chat-main {
+  width: 720px;
+  min-width: 0;
+}
+
+.users-sidebar {
+  width: 200px;
+  background: #000;
+  color: #33ff33;
+  border: 3px solid #444;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.users-header {
+  padding: 10px 12px;
+  font-weight: bold;
+  border-bottom: 1px solid #33ff33;
+  font-size: 13px;
+}
+
+.users-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.users-list li {
+  padding: 2px 0;
+}
+
+.users-list-you {
+  color: #33ff33;
+  font-weight: bold;
 }
