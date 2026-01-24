@@ -6,12 +6,19 @@ import "./globals.css";
 
 const WS_URL = "ws://localhost:8080/chat";
 
+type HistoryItem = {
+  author: string;
+  content: string;
+  timestamp: number;
+};
+
 type ChatEvent = {
-  type: "message" | "system" | "joined_ok" | "user_list" | "error";
+  type: "message" | "system" | "joined_ok" | "user_list" | "error" | "history";
   author?: string;
   content?: string;
   timestamp?: number;
   users?: string[];
+  messages?: HistoryItem[];
 };
 
 type Message = {
@@ -148,6 +155,22 @@ function ChatView({
           lastJsonMessage.timestamp ?? Date.now()
         );
         break;
+      case "history": {
+        const items = lastJsonMessage.messages ?? [];
+        setMessages(prev => [
+          ...prev,
+          ...items.map((item, idx) => ({
+            id: item.timestamp * 10000 + idx,
+            author: item.author,
+            content: item.content,
+            time: new Date(item.timestamp).toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          })),
+        ]);
+        break;
+      }
       case "error":
         gotError.current = true;
         onError(lastJsonMessage.content ?? "Erro desconhecido.");

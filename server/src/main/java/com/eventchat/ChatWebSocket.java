@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @ServerEndpoint("/chat")
 public class ChatWebSocket {
@@ -21,6 +23,7 @@ public class ChatWebSocket {
     private static final int MAX_USERS = 10;
     private static final ConcurrentHashMap<Session, String> SESSIONS = new ConcurrentHashMap<>();
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ExecutorService WORKER = Executors.newFixedThreadPool(4);
 
     @OnOpen
     public void onOpen(Session session) {
@@ -74,28 +77,67 @@ public class ChatWebSocket {
 
         SESSIONS.put(session, author);
 
-        ObjectNode joinedOk = MAPPER.createObjectNode();
-        joinedOk.put("type", "joined_ok");
-        joinedOk.put("author", author);
-        ArrayNode users = joinedOk.putArray("users");
-        SESSIONS.values().forEach(users::add);
-        send(session, MAPPER.writeValueAsString(joinedOk));
-
         broadcastSystem(author + " entrou no chat.");
         broadcastUserList();
+        WORKER.submit(() -> {
+            sendHistory(session);
+            sendJoinedOk(session, author);
+        });
     }
 
-    private void handleMessage(JsonNode json, Session session) throws IOException {
+    private void sendHistory(Session session) {
+        try {
+            ChatHistoryService history = ChatHistoryHolder.get();
+            if (history == null) return;
+            List<ChatMessage> list = history.findAllOrderByTime();
+            ObjectNode payload = MAPPER.createObjectNode();
+            payload.put("type", "history");
+            ArrayNode arr = payload.putArray("messages");
+            for (ChatMessage m : list) {
+                ObjectNode o = MAPPER.createObjectNode();
+                o.put("author", m.author);
+                o.put("content", m.content);
+                o.put("timestamp", m.msgTimestamp);
+                arr.add(o);
+            }
+            send(session, MAPPER.writeValueAsString(payload));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendJoinedOk(Session session, String author) {
+        try {
+            ObjectNode joinedOk = MAPPER.createObjectNode();
+            joinedOk.put("type", "joined_ok");
+            joinedOk.put("author", author);
+            ArrayNode users = joinedOk.putArray("users");
+            SESSIONS.values().forEach(users::add);
+            send(session, MAPPER.writeValueAsString(joinedOk));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleMessage(JsonNode json, Session session) {
         String author = SESSIONS.get(session);
         String content = json.has("content") ? json.get("content").asText() : "";
         long timestamp = json.has("timestamp") ? json.get("timestamp").asLong() : System.currentTimeMillis();
 
-        ObjectNode msg = MAPPER.createObjectNode();
-        msg.put("type", "message");
-        msg.put("author", author);
-        msg.put("content", content);
-        msg.put("timestamp", timestamp);
-        broadcast(MAPPER.writeValueAsString(msg));
+        WORKER.submit(() -> {
+            try {
+                ChatHistoryService history = ChatHistoryHolder.get();
+                if (history != null) history.save(author, content, timestamp);
+                ObjectNode msg = MAPPER.createObjectNode();
+                msg.put("type", "message");
+                msg.put("author", author);
+                msg.put("content", content);
+                msg.put("timestamp", timestamp);
+                broadcast(MAPPER.writeValueAsString(msg));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @OnClose
