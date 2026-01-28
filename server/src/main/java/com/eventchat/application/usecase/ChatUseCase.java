@@ -69,6 +69,12 @@ public class ChatUseCase implements ChatInputPort {
         }
     }
 
+    @Override
+    @Transactional
+    public List<MessageDto> listHistory() {
+        return loadHistory();
+    }
+
     private void validateName(String name) throws JoinException {
         if (name == null || name.trim().isEmpty()) {
             throw new JoinException("Nome não pode ser vazio.");
