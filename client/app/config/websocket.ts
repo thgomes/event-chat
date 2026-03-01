@@ -1,1 +1,1 @@
-export const WS_URL = "ws://localhost:8080/chat";
+export const WS_URL = "ws://localhost:80/chat";
