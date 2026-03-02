@@ -20,7 +20,9 @@ services:
     ports:
       - "80:80"
     volumes:
+      - ./nginx/errors:/etc/nginx/errors
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./.htpasswd:/etc/nginx/.htpasswd
     depends_on:
       app:
         condition: service_healthy
